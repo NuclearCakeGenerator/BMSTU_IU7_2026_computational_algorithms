@@ -76,7 +76,7 @@ def load_current_data() -> List[Tuple[float, float]]:
     Returns:
         List of tuples (time_s, current_A)
     """
-    return _load_2d_table("current.txt")
+    return _load_2d_table("time_electric_current.txt")
 
 
 def load_heavy_particles_concentration() -> List[Tuple[float, float, float, float]]:
@@ -86,7 +86,7 @@ def load_heavy_particles_concentration() -> List[Tuple[float, float, float, floa
     Returns:
         List of tuples (T_K, Nh_at_0.5MPa, Nh_at_1.5MPa, Nh_at_2.5MPa) in units of 1e18 cm^-3
     """
-    return _load_3d_table("heavy_particles.txt")
+    return _load_3d_table("temperature_pressure_concentration.txt")
 
 
 def load_electrical_conductivity() -> List[Tuple[float, float, float, float]]:
@@ -96,7 +96,7 @@ def load_electrical_conductivity() -> List[Tuple[float, float, float, float]]:
     Returns:
         List of tuples (T_K, sigma_at_0.5MPa, sigma_at_1.5MPa, sigma_at_2.5MPa) in 1/(Ohm*cm)
     """
-    return _load_3d_table("conductivity.txt")
+    return _load_3d_table("temperature_pressure_conductivity.txt")
 
 
 def load_heat_capacity() -> List[Tuple[float, float, float, float]]:
@@ -106,7 +106,7 @@ def load_heat_capacity() -> List[Tuple[float, float, float, float]]:
     Returns:
         List of tuples (T_K, C_at_0.5MPa, C_at_1.5MPa, C_at_2.5MPa) in J/(cm^3*K)
     """
-    return _load_3d_table("heat_capacity.txt")
+    return _load_3d_table("temperature_heat_capacity.txt")
 
 
 def load_radiation_power() -> List[Tuple[float, float, float, float]]:
@@ -116,7 +116,7 @@ def load_radiation_power() -> List[Tuple[float, float, float, float]]:
     Returns:
         List of tuples (T_K, q_at_0.5MPa, q_at_1.5MPa, q_at_2.5MPa) in W/cm^3
     """
-    return _load_3d_table("radiation.txt")
+    return _load_3d_table("volumetric_radiation_power.txt")
 
 
 def interpolate_1d(
