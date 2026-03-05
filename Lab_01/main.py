@@ -4,7 +4,7 @@ from utils import (
     load_current_data,
     load_heavy_particles_concentration,
     load_electrical_conductivity,
-    load_heat_capacity     ,     
+    load_heat_capacity,
     load_radiation_power,
     interpolate_2d,
     interpolate_1d,
@@ -32,12 +32,13 @@ class wanted_data:
 
 
 class data:
-    temperature: list[tuple[float, float]] = []
-    pressure: list[tuple[float, float]] = []
-    conductivity: list[tuple[float, float]] = []
-    volumetric_radiation: list[tuple[float, float]] = []
-    resistance: list[tuple[float, float]] = []
-    surface_radiation: list[tuple[float, float]] = []
+    current_t: list[tuple[float, float]] = load_current_data()
+    concentration_T_P: list[tuple[float, float, float]] = (
+        load_heavy_particles_concentration()
+    )
+    conductivity_T_P: list[tuple[float, float, float]] = load_electrical_conductivity()
+    heat_capacity_T_P: list[tuple[float, float, float]] = load_heat_capacity()
+    radiation_power_T_P: list[tuple[float, float, float]] = load_radiation_power()
 
 
 dataset = load_current_data()
