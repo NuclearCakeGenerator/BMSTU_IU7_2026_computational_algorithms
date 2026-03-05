@@ -20,6 +20,7 @@ class configuration:
     tube_length: float = 0.1  # m
     tube_radius: float = 0.02  # m
     time_step: float = 1e-6  # s
+    pressure_seek_range: tuple[float, float] = (0.3, 2.5)  # mbar
 
 
 class wanted_data:
@@ -31,7 +32,7 @@ class wanted_data:
     surface_radiation: list[tuple[float, float]] = []
 
 
-class data:
+class initial_data:
     current_t: list[tuple[float, float]] = load_current_data()
     concentration_T_P: list[tuple[float, float, float]] = (
         load_heavy_particles_concentration()
@@ -41,7 +42,32 @@ class data:
     radiation_power_T_P: list[tuple[float, float, float]] = load_radiation_power()
 
 
-dataset = load_current_data()
+def calculate_pressure(temperature: float) -> float:
+    EQUALITY_ACCURACY = 1e-14
+    pressure_min = configuration.pressure_seek_range[0]
+    pressure_max = configuration.pressure_seek_range[1]
+    while pressure_max - pressure_min > EQUALITY_ACCURACY:
+        pressure_mid = (pressure_min + pressure_max) / 2
+        concentration = interpolate_2d(
+            initial_data.concentration_T_P, (temperature, pressure_mid)
+        )
+
+        if (
+            concentration
+            - 7.242e4 * configuration.idle_pressure / configuration.idle_temperature
+            > 0
+        ):
+            pressure_max = pressure_mid
+        else:
+            pressure_min = pressure_mid
+
+    return (pressure_min + pressure_max) / 2
+
+
+# wanted_data.temperature.append((configuration.starting_time, configuration.starting_temperature))
+
+# while current_time <= configuration.ending_time:
+
 
 # Create figure
 plt.figure(figsize=(10, 6))
