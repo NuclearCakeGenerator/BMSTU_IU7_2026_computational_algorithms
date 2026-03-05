@@ -21,6 +21,7 @@ class configuration:
     tube_radius: float = 0.5  # cm
     time_step: float = 1e-6  # s
     pressure_seek_range: tuple[float, float] = (0.3, 2.5)  # MPa
+    target_interpolation_degree: int = 5
 
 
 class wanted_data:
@@ -50,7 +51,9 @@ def pressure_by_temperature(temperature: float) -> float:
     while pressure_max - pressure_min > EQUALITY_ACCURACY:
         pressure_mid = (pressure_min + pressure_max) / 2
         concentration = interpolate_2d(
-            initial_data.concentration_T_P, (temperature, pressure_mid)
+            initial_data.concentration_T_P,
+            (temperature, pressure_mid),
+            degree=configuration.target_interpolation_degree,
         )
 
         if (
@@ -68,17 +71,23 @@ def pressure_by_temperature(temperature: float) -> float:
 def temperature_derivative(temperature: float, time: float) -> float:
     pressure = pressure_by_temperature(temperature)
     conductivity = interpolate_2d(
-        initial_data.conductivity_T_P, (temperature, pressure)
+        initial_data.conductivity_T_P,
+        (temperature, pressure),
+        degree=configuration.target_interpolation_degree,
     )
     radiation_power = interpolate_2d(
-        initial_data.radiation_power_T_P, (temperature, pressure)
+        initial_data.radiation_power_T_P,
+        (temperature, pressure),
+        degree=configuration.target_interpolation_degree,
     )
     heat_capacity = interpolate_2d(
-        initial_data.heat_capacity_T_P, (temperature, pressure)
+        initial_data.heat_capacity_T_P,
+        (temperature, pressure),
+        degree=configuration.target_interpolation_degree,
     )
-    current_density = interpolate_1d(initial_data.current_t, time) / (
-        configuration.tube_radius**2 * np.pi
-    )
+    current_density = interpolate_1d(
+        initial_data.current_t, time, degree=configuration.target_interpolation_degree
+    ) / (configuration.tube_radius**2 * np.pi)
 
     return (current_density**2 / conductivity - radiation_power) / heat_capacity
 
@@ -98,6 +107,7 @@ wanted_data.conductivity.append(
         interpolate_2d(
             initial_data.conductivity_T_P,
             (configuration.starting_temperature, wanted_data.pressure[0][1]),
+            degree=configuration.target_interpolation_degree,
         ),
     )
 )
@@ -107,6 +117,7 @@ wanted_data.volumetric_radiation.append(
         interpolate_2d(
             initial_data.radiation_power_T_P,
             (configuration.starting_temperature, wanted_data.pressure[0][1]),
+            degree=configuration.target_interpolation_degree,
         ),
     )
 )
@@ -132,10 +143,14 @@ while last_time <= configuration.ending_time:
     current_temperature = T_n_plus_1
     current_pressure = pressure_by_temperature(current_temperature)
     current_conductivity = interpolate_2d(
-        initial_data.conductivity_T_P, (current_temperature, current_pressure)
+        initial_data.conductivity_T_P,
+        (current_temperature, current_pressure),
+        degree=configuration.target_interpolation_degree,
     )
     current_radiation = interpolate_2d(
-        initial_data.radiation_power_T_P, (current_temperature, current_pressure)
+        initial_data.radiation_power_T_P,
+        (current_temperature, current_pressure),
+        degree=configuration.target_interpolation_degree,
     )
 
     wanted_data.temperature.append((current_time, current_temperature))
