@@ -84,7 +84,8 @@ def load_heavy_particles_concentration() -> List[Tuple[float, float, float, floa
     Load heavy particles concentration data: Nh(T,p).
 
     Returns:
-        List of tuples (T_K, Nh_at_0.5MPa, Nh_at_1.5MPa, Nh_at_2.5MPa) in units of 1e18 cm^-3
+        List of tuples (T_K, Nh_at_0.5MPa, Nh_at_1.5MPa, Nh_at_2.5MPa) in units of 1e18
+        cm^-3
     """
     return _load_3d_table("temperature_pressure_concentration.txt")
 
@@ -94,7 +95,8 @@ def load_electrical_conductivity() -> List[Tuple[float, float, float, float]]:
     Load electrical conductivity data: σ(T,p).
 
     Returns:
-        List of tuples (T_K, sigma_at_0.5MPa, sigma_at_1.5MPa, sigma_at_2.5MPa) in 1/(Ohm*cm)
+        List of tuples (T_K, sigma_at_0.5MPa, sigma_at_1.5MPa, sigma_at_2.5MPa) in
+        1/(Ohm*cm)
     """
     return _load_3d_table("temperature_pressure_conductivity.txt")
 
