@@ -28,6 +28,7 @@ class wanted_data:
     pressure: list[tuple[float, float]] = []
     conductivity: list[tuple[float, float]] = []
     volumetric_radiation: list[tuple[float, float]] = []
+    # idle computation below
     resistance: list[tuple[float, float]] = []
     surface_radiation: list[tuple[float, float]] = []
 
@@ -42,7 +43,7 @@ class initial_data:
     radiation_power_T_P: list[tuple[float, float, float]] = load_radiation_power()
 
 
-def calculate_pressure(temperature: float) -> float:
+def pressure_by_temperature(temperature: float) -> float:
     EQUALITY_ACCURACY = 1e-14
     pressure_min = configuration.pressure_seek_range[0]
     pressure_max = configuration.pressure_seek_range[1]
@@ -64,85 +65,96 @@ def calculate_pressure(temperature: float) -> float:
     return (pressure_min + pressure_max) / 2
 
 
-# wanted_data.temperature.append((configuration.starting_time, configuration.starting_temperature))
+def temperature_derivative(temperature: float, time: float) -> float:
+    pressure = pressure_by_temperature(temperature)
+    conductivity = interpolate_2d(
+        initial_data.conductivity_T_P, (temperature, pressure)
+    )
+    radiation_power = interpolate_2d(
+        initial_data.radiation_power_T_P, (temperature, pressure)
+    )
+    heat_capacity = interpolate_2d(
+        initial_data.heat_capacity_T_P, (temperature, pressure)
+    )
+    current_density = interpolate_1d(initial_data.current_t, time) / (
+        configuration.tube_radius**2 * np.pi
+    )
 
-# while current_time <= configuration.ending_time:
-
-
-# Create figure
-plt.figure(figsize=(10, 6))
-
-# Plot original data points
-x_data = [point[0] for point in dataset]
-y_data = [point[1] for point in dataset]
-plt.scatter(x_data, y_data, color="red", s=100, label="Data points", zorder=5)
-
-# Generate interpolated curve
-x_smooth = np.linspace(min(x_data), max(x_data), 1000)
-y_smooth = [interpolate_1d(dataset, x, degree=5) for x in x_smooth]
-
-# Plot interpolated curve
-plt.plot(x_smooth, y_smooth, "b-", linewidth=2, label="Interpolated curve")
-
-# Labels and legend
-plt.xlabel("X")
-plt.ylabel("Y")
-plt.title("1D Interpolation Test")
-plt.legend()
-plt.grid(True, alpha=0.3)
-plt.tight_layout()
-plt.show()
+    return (current_density**2 / conductivity - radiation_power) / heat_capacity
 
 
-# # 2D Interpolation for 3D dataset
-# def visualize_2d_interpolation(dataset_3d):
-#     """
-#     Visualize 2D interpolation for a 3D dataset (x, y, z).
+wanted_data.temperature.append(
+    (configuration.starting_time, configuration.starting_temperature)
+)
+wanted_data.pressure.append(
+    (
+        configuration.starting_time,
+        pressure_by_temperature(configuration.starting_temperature),
+    )
+)
+wanted_data.conductivity.append(
+    (
+        configuration.starting_time,
+        interpolate_2d(
+            initial_data.conductivity_T_P,
+            (configuration.starting_temperature, wanted_data.pressure[0][1]),
+        ),
+    )
+)
+wanted_data.volumetric_radiation.append(
+    (
+        configuration.starting_time,
+        interpolate_2d(
+            initial_data.radiation_power_T_P,
+            (configuration.starting_temperature, wanted_data.pressure[0][1]),
+        ),
+    )
+)
 
-#     Parameters:
-#     dataset_3d: List of tuples (x, y, z)
-#     """
-#     # Extract x, y, z coordinates
-#     x_pts = np.array([point[0] for point in dataset_3d])
-#     y_pts = np.array([point[1] for point in dataset_3d])
-#     z_pts = np.array([point[2] for point in dataset_3d])
+# main integration loop
+last_time = configuration.starting_time
+last_temperature = configuration.starting_temperature
+while last_time <= configuration.ending_time:
+    T_n_plus_1_2 = (
+        last_temperature
+        + temperature_derivative(last_temperature, last_time)
+        * configuration.time_step
+        / 2
+    )
+    P_n_plus_1_2 = pressure_by_temperature(T_n_plus_1_2)
+    T_n_plus_1 = (
+        last_temperature
+        + temperature_derivative(T_n_plus_1_2, last_time + configuration.time_step / 2)
+        * configuration.time_step
+    )
 
-#     # Create a grid for interpolation
-#     x_min, x_max = x_pts.min(), x_pts.max()
-#     y_min, y_max = y_pts.min(), y_pts.max()
+    current_time = last_time + configuration.time_step
+    current_temperature = T_n_plus_1
+    current_pressure = pressure_by_temperature(current_temperature)
+    current_conductivity = interpolate_2d(
+        initial_data.conductivity_T_P, (current_temperature, current_pressure)
+    )
+    current_radiation = interpolate_2d(
+        initial_data.radiation_power_T_P, (current_temperature, current_pressure)
+    )
 
-#     x_grid = np.linspace(x_min, x_max, 100)
-#     y_grid = np.linspace(y_min, y_max, 100)
-#     X, Y = np.meshgrid(x_grid, y_grid)
+    wanted_data.temperature.append((current_time, current_temperature))
+    wanted_data.pressure.append((current_time, current_pressure))
+    wanted_data.conductivity.append((current_time, current_conductivity))
+    wanted_data.volumetric_radiation.append((current_time, current_radiation))
 
-#     # Interpolate z values on the grid
-#     Z = np.zeros_like(X)
-#     for i in range(X.shape[0]):
-#         for j in range(X.shape[1]):
-#             Z[i, j] = interpolate_2d(dataset_3d, (X[i, j], Y[i, j]))
+    last_time = current_time
+    last_temperature = current_temperature
 
-#     # Create 3D plot
-#     fig = plt.figure()
-
-#     # Surface plot
-#     ax1 = fig.add_subplot(121, projection="3d")
-#     ax1.plot_surface(X, Y, Z, cmap="viridis", alpha=0.8, edgecolor="none")
-#     ax1.scatter(x_pts, y_pts, z_pts, color="red", s=100, label="Data points")
-#     ax1.set_xlabel("X")
-#     ax1.set_ylabel("Y")
-#     ax1.set_zlabel("Z")
-#     ax1.set_title("3D Surface Interpolation")
-#     ax1.legend()
-
-#     # # Contour plot
-#     # ax2 = fig.add_subplot(122)
-#     # contour = ax2.contourf(X, Y, Z, levels=20, cmap="viridis")
-#     # ax2.scatter(x_pts, y_pts, color="red", s=100, zorder=5, label="Data points")
-#     # ax2.set_xlabel("X")
-#     # ax2.set_ylabel("Y")
-#     # ax2.set_title("2D Contour Interpolation")
-#     # ax2.legend()
-#     # plt.colorbar(contour, ax=ax2, label="Z value")
-
-#     # plt.tight_layout()
-#     plt.show()
+wanted_data.resistance = [
+    (
+        t,
+        configuration.tube_length
+        / (conductivity * np.pi * configuration.tube_radius**2),
+    )
+    for t, conductivity in wanted_data.conductivity
+]
+wanted_data.surface_radiation = [
+    (t, radiation * configuration.tube_radius / configuration.tube_length)
+    for t, radiation in wanted_data.volumetric_radiation
+]
