@@ -120,7 +120,7 @@ def load_radiation_power() -> List[Tuple[float, float, float, float]]:
 
 
 def interpolate_1d(
-    dataset: List[Tuple[float, float]], target: float, degree: int = 6
+    dataset: List[Tuple[float, float]], target: float, degree: int = 5
 ) -> float:
     """
     Interpolate the value for the target point based on the provided
@@ -140,7 +140,9 @@ def interpolate_1d(
         raise ValueError("Degree of interpolation must be at least 1.")
 
     if len(dataset) <= 1:
-        raise ValueError("Dataset must contain at least two points for interpolation.")
+        raise ValueError(
+            "Dataset must contain at least two points " "for interpolation."
+        )
 
     degree = min(degree, len(dataset) - 1)  # Adjust degree if dataset is small
 
@@ -166,15 +168,27 @@ def interpolate_1d(
     return result
 
 
-def interpolate_nd(dataset: List[Tuple[float]], target: Tuple[float]) -> float:
+def interpolate_2d(
+    dataset: List[Tuple[float, float, float]],
+    target: Tuple[float, float],
+    degree: int = 5,
+) -> float:
     """
     Interpolate the value for the target point based on the provided dataset.
 
     Args:
         dataset: List of tuples containing 2d or 3d dataset
         target: Tuple containing 1d or 2d coordinates for interpolation
+        degree: Degree of the polynomial for interpolation (default is 5)
     Returns:
         Interpolated value at the target point
     """
 
-    pass
+    x_coords = list(set(point[0] for point in dataset))
+
+    first_level_interpolations = []
+    for x in x_coords:
+        points_for_x = [(point[1], point[2]) for point in dataset if point[0] == x]
+        interpolated_value = interpolate_1d(points_for_x, target[1], degree=2)
+        first_level_interpolations.append((x, interpolated_value))
+    return interpolate_1d(first_level_interpolations, target[0], degree)
