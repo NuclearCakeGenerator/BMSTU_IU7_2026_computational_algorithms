@@ -12,15 +12,15 @@ from utils import (
 
 
 class configuration:
-    idle_pressure: float = 0.04  # mbar
+    idle_pressure: float = 0.04  # MPa
     idle_temperature: float = 300  # K
     starting_time: float = 14e-6  # s
     ending_time: float = 450e-6  # s
     starting_temperature: float = 5400  # K
-    tube_length: float = 0.1  # m
-    tube_radius: float = 0.02  # m
+    tube_length: float = 12.0  # cm
+    tube_radius: float = 0.5  # cm
     time_step: float = 1e-6  # s
-    pressure_seek_range: tuple[float, float] = (0.3, 2.5)  # mbar
+    pressure_seek_range: tuple[float, float] = (0.3, 2.5)  # MPa
 
 
 class wanted_data:
@@ -155,6 +155,72 @@ wanted_data.resistance = [
     for t, conductivity in wanted_data.conductivity
 ]
 wanted_data.surface_radiation = [
-    (t, radiation * configuration.tube_radius / configuration.tube_length)
+    (t, radiation * configuration.tube_radius / 2)
     for t, radiation in wanted_data.volumetric_radiation
 ]
+
+# Display six plots for wanted_data
+fig, axes = plt.subplots(2, 3, figsize=(15, 10))
+
+# Plot 1: Temperature vs Time
+ax = axes[0, 0]
+times, temps = zip(*wanted_data.temperature)
+ax.plot(times, temps, "b-", linewidth=2)
+ax.scatter(times, temps, color="red", s=20, alpha=0.5)
+ax.set_xlabel("Time (s)")
+ax.set_ylabel("Temperature (K)")
+ax.set_title("Temperature vs Time")
+ax.grid(True, alpha=0.3)
+
+# Plot 2: Pressure vs Time
+ax = axes[0, 1]
+times, pressures = zip(*wanted_data.pressure)
+ax.plot(times, pressures, "g-", linewidth=2)
+ax.scatter(times, pressures, color="red", s=20, alpha=0.5)
+ax.set_xlabel("Time (s)")
+ax.set_ylabel("Pressure (mbar)")
+ax.set_title("Pressure vs Time")
+ax.grid(True, alpha=0.3)
+
+# Plot 3: Conductivity vs Time
+ax = axes[0, 2]
+times, conductivities = zip(*wanted_data.conductivity)
+ax.plot(times, conductivities, "m-", linewidth=2)
+ax.scatter(times, conductivities, color="red", s=20, alpha=0.5)
+ax.set_xlabel("Time (s)")
+ax.set_ylabel("Conductivity (1/(Ohm·cm))")
+ax.set_title("Conductivity vs Time")
+ax.grid(True, alpha=0.3)
+
+# Plot 4: Volumetric Radiation vs Time
+ax = axes[1, 0]
+times, radiations = zip(*wanted_data.volumetric_radiation)
+ax.plot(times, radiations, "c-", linewidth=2)
+ax.scatter(times, radiations, color="red", s=20, alpha=0.5)
+ax.set_xlabel("Time (s)")
+ax.set_ylabel("Volumetric Radiation (W/cm³)")
+ax.set_title("Volumetric Radiation vs Time")
+ax.grid(True, alpha=0.3)
+
+# Plot 5: Resistance vs Time
+ax = axes[1, 1]
+times, resistances = zip(*wanted_data.resistance)
+ax.plot(times, resistances, "y-", linewidth=2)
+ax.scatter(times, resistances, color="red", s=20, alpha=0.5)
+ax.set_xlabel("Time (s)")
+ax.set_ylabel("Resistance (Ω)")
+ax.set_title("Resistance vs Time")
+ax.grid(True, alpha=0.3)
+
+# Plot 6: Surface Radiation vs Time
+ax = axes[1, 2]
+times, surf_radiations = zip(*wanted_data.surface_radiation)
+ax.plot(times, surf_radiations, "k-", linewidth=2)
+ax.scatter(times, surf_radiations, color="red", s=20, alpha=0.5)
+ax.set_xlabel("Time (s)")
+ax.set_ylabel("Surface Radiation (W/cm²)")
+ax.set_title("Surface Radiation vs Time")
+ax.grid(True, alpha=0.3)
+
+plt.tight_layout()
+plt.show()
