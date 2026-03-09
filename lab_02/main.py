@@ -7,7 +7,7 @@ from utils import load_3d_data, interpolate_3d
 class Interpolation3DApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("3D Interpolation")
+        self.root.title("3D интерполяция")
         self.root.geometry("650x700")
 
         # Load data
@@ -48,7 +48,7 @@ class Interpolation3DApp:
 
         # Title
         title_label = ttk.Label(
-            main_frame, text="3D Interpolation", font=("Arial", 14, "bold")
+            main_frame, text="3D Интерполяция", font=("Arial", 14, "bold")
         )
         title_label.grid(row=0, column=0, columnspan=3, pady=10)
 
