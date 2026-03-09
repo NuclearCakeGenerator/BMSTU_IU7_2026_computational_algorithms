@@ -8,7 +8,7 @@ class Interpolation3DApp:
     def __init__(self, root):
         self.root = root
         self.root.title("3D Interpolation")
-        self.root.geometry("600x550")
+        self.root.geometry("650x700")
         
         # Load data
         data_file = Path(__file__).parent / "26-02-2026-Исход_данные__Лаб_работы__2.txt"
@@ -41,6 +41,10 @@ class Interpolation3DApp:
     def create_widgets(self):
         main_frame = ttk.Frame(self.root, padding="10")
         main_frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
+        
+        # Configure root window to expand
+        self.root.columnconfigure(0, weight=1)
+        self.root.rowconfigure(0, weight=1)
         
         # Title
         title_label = ttk.Label(
