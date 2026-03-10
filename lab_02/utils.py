@@ -192,16 +192,13 @@ def interpolate_3d(
     """
     target_x, target_y, target_z = target
 
-    # Get unique values for each dimension
     y_values = sorted(set(point[0][1] for point in dataset))
     z_values = sorted(set(point[0][2] for point in dataset))
 
-    # Step 1: Interpolate along x for each (y, z) pair
     yz_pairs = [(y, z) for y in y_values for z in z_values]
     interpolated_x = []
 
     for y, z in yz_pairs:
-        # Get all points with this y, z
         x_data = [
             (point[0][0], point[1])
             for point in dataset
