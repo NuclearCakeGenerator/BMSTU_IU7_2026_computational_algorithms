@@ -24,9 +24,9 @@ class Interpolation3DApp:
         self.z_method = tk.StringVar(value="polynomial")
 
         # Variables for polynomial degrees
-        self.x_degree = tk.IntVar(value=5)
-        self.y_degree = tk.IntVar(value=5)
-        self.z_degree = tk.IntVar(value=5)
+        self.x_degree = tk.IntVar(value=3)
+        self.y_degree = tk.IntVar(value=3)
+        self.z_degree = tk.IntVar(value=3)
 
         # Variables for coordinates
         self.x_coord = tk.DoubleVar(value=1.5)
