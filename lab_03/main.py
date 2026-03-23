@@ -12,9 +12,9 @@ from utils import Dataset, PolynomialDegree, approximate_polynomial, polynomial
 
 
 TASK_1_DOTS: list[tuple[float, float]] = [
-    (-4.0, 15.5),
-    (-3.0, 11.6),
-    (-2.0, 7.0),
+    (-4.0, 1.5),
+    (-3.0, 4.6),
+    (-2.0, 3.0),
     (-1.0, 3.1),
     (0.0, 1.2),
     (1.0, 1.6),
@@ -22,7 +22,7 @@ TASK_1_DOTS: list[tuple[float, float]] = [
     (3.0, 8.2),
     (4.0, 14.6),
 ]
-TASK_1_WEIGHTS: list[float] = [0.8, 1.3, 0.9, 1.0, 1.8, 1.2, 1.0, 0.9, 1.4]
+TASK_1_WEIGHTS: list[float] = [0.2, 0.2, 0.2, 0.2, 0.2, 1.2, 99, 99, 1.4]
 
 TASK_2_DOTS: list[tuple[float, float, float]] = [
     (-2.0, -2.0, 8.9),
