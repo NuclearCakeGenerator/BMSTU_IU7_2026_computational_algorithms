@@ -54,7 +54,7 @@ def _design_row_2d(x: float, y: float, degree: PolynomialDegree) -> list[float]:
 
 
 def approximate_polynomial(
-    dataset: Dataset, degree: PolynomialDegree | int
+    dataset: Dataset, degree: PolynomialDegree
 ) -> tuple[float, ...]:
     degree = PolynomialDegree(degree)
 
