@@ -77,12 +77,20 @@ def approximate_polynomial(
 
     matrix = np.array(matrix_rows, dtype=float)
     rhs = np.array(values, dtype=float)
+    weights = np.array(dataset.weights, dtype=float)
 
-    sqrt_weights = np.sqrt(np.array(dataset.weights, dtype=float))
-    weighted_matrix = matrix * sqrt_weights[:, np.newaxis]
-    weighted_rhs = rhs * sqrt_weights
+    if np.any(weights < 0):
+        raise ValueError("Weights must be non-negative")
 
-    factors, *_ = np.linalg.lstsq(weighted_matrix, weighted_rhs, rcond=None)
+    weight_matrix = np.diag(weights)
+    normal_matrix = matrix.T @ weight_matrix @ matrix
+    normal_rhs = matrix.T @ weight_matrix @ rhs
+
+    try:
+        factors = np.linalg.solve(normal_matrix, normal_rhs)
+    except np.linalg.LinAlgError:
+        factors = np.linalg.pinv(normal_matrix) @ normal_rhs
+
     return tuple(float(f) for f in factors)
 
 
