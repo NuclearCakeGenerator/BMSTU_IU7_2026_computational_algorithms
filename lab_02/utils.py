@@ -88,15 +88,15 @@ def interpolate_spline_1d(dataset: List[Tuple[float, float]], target: float) -> 
     for i in range(1, len(h)):
         F.append(3 * ((y[i + 1] - y[i]) / h[i] - (y[i] - y[i - 1]) / h[i - 1]))
 
-    Dzeta = [0, -D[1] / B[1]]
-    for i in range(2, len(h)):
+    Dzeta = [0]
+    for i in range(1, len(h)):
         Dzeta.append(-D[i] / (B[i] + A[i] * Dzeta[i - 1]))
 
     c = [0] * (n + 1)
     c[0] = 2
     c[-1] = 2
-    Nu = [0, (F[1] - A[1] * c[0]) / (B[1] + A[1] * Dzeta[0])]
-    for i in range(2, len(h)):
+    Nu = [c[0]]
+    for i in range(1, len(h)):
         Nu.append((F[i] - A[i] * Nu[i - 1]) / (B[i] + A[i] * Dzeta[i - 1]))
 
     for i in range(n - 2, 0, -1):
