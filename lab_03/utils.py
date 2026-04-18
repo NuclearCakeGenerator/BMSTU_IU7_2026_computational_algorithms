@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import IntEnum
-from typing import Sequence
+import math
+from typing import Callable, Sequence
 
 import numpy as np
 
@@ -119,3 +120,126 @@ def polynomial(arguments: tuple[float, ...], factors: tuple[float, ...]) -> floa
         raise ValueError("Invalid number of factors for 2D polynomial")
 
     raise ValueError("Arguments must be (x,) or (x, y)")
+
+
+def root_mean_square_error(
+    points: Sequence[tuple[float, float]],
+    predictor: Callable[[float], float],
+) -> float:
+    if not points:
+        raise ValueError("Points for RMSE cannot be empty")
+
+    sq_sum = 0.0
+    for x, y in points:
+        dy = predictor(x) - y
+        sq_sum += dy * dy
+    return math.sqrt(sq_sum / len(points))
+
+
+def fit_power_model(points: Sequence[tuple[float, float]]) -> tuple[float, float]:
+    transformed = []
+    for x, y in points:
+        if x <= 0 or y <= 0:
+            raise ValueError("Power model requires x > 0 and y > 0")
+        transformed.append((math.log(x), math.log(y)))
+
+    c0, b = approximate_polynomial(Dataset(transformed), PolynomialDegree.LINEAR)
+    a = math.exp(c0)
+    return a, b
+
+
+def fit_exponential_model(points: Sequence[tuple[float, float]]) -> tuple[float, float]:
+    transformed = []
+    for x, y in points:
+        if y <= 0:
+            raise ValueError("Exponential model requires y > 0")
+        transformed.append((x, math.log(y)))
+
+    c0, b = approximate_polynomial(Dataset(transformed), PolynomialDegree.LINEAR)
+    a = math.exp(c0)
+    return a, b
+
+
+def fit_linear_model(points: Sequence[tuple[float, float]]) -> tuple[float, float]:
+    c0, c1 = approximate_polynomial(Dataset(points), PolynomialDegree.LINEAR)
+    return c0, c1
+
+
+def fit_quadratic_model(
+    points: Sequence[tuple[float, float]],
+) -> tuple[float, float, float]:
+    c0, c1, c2 = approximate_polynomial(Dataset(points), PolynomialDegree.QUADRATIC)
+    return c0, c1, c2
+
+
+def solve_boundary_problem(
+    m: int,
+    sample_count: int = 80,
+) -> tuple[np.ndarray, np.ndarray, tuple[float, ...]]:
+    """
+    Solve y'' + x*y' + x*y = 0, y(0)=1, y(1)=0 by least squares trial functions.
+
+    y(x) = u0(x) + sum(Ck * uk(x), k=1..m)
+    where u0(x)=1-x and uk(x)=x^k(1-x).
+    """
+    if m < 1:
+        raise ValueError("m must be >= 1")
+
+    x_samples = np.linspace(0.0, 1.0, sample_count + 2)[1:-1]
+
+    def u0(x: np.ndarray) -> np.ndarray:
+        return 1.0 - x
+
+    def u0_d1(x: np.ndarray) -> np.ndarray:
+        return -np.ones_like(x)
+
+    def u0_d2(x: np.ndarray) -> np.ndarray:
+        return np.zeros_like(x)
+
+    def uk(x: np.ndarray, k: int) -> np.ndarray:
+        return x**k - x ** (k + 1)
+
+    def uk_d1(x: np.ndarray, k: int) -> np.ndarray:
+        return k * x ** (k - 1) - (k + 1) * x**k
+
+    def uk_d2(x: np.ndarray, k: int) -> np.ndarray:
+        result = -k * (k + 1) * x ** (k - 1)
+        if k >= 2:
+            result += k * (k - 1) * x ** (k - 2)
+        return result
+
+    def operator(
+        y: np.ndarray,
+        dy: np.ndarray,
+        d2y: np.ndarray,
+        x: np.ndarray,
+    ) -> np.ndarray:
+        return d2y + x * dy + x * y
+
+    rhs = -operator(u0(x_samples), u0_d1(x_samples), u0_d2(x_samples), x_samples)
+
+    columns = []
+    for k in range(1, m + 1):
+        col = operator(
+            uk(x_samples, k),
+            uk_d1(x_samples, k),
+            uk_d2(x_samples, k),
+            x_samples,
+        )
+        columns.append(col)
+
+    matrix = np.column_stack(columns)
+    normal_matrix = matrix.T @ matrix
+    normal_rhs = matrix.T @ rhs
+
+    try:
+        coeffs = np.linalg.solve(normal_matrix, normal_rhs)
+    except np.linalg.LinAlgError:
+        coeffs = np.linalg.pinv(normal_matrix) @ normal_rhs
+
+    x_grid = np.linspace(0.0, 1.0, 240)
+    y_grid = u0(x_grid)
+    for i, c in enumerate(coeffs, start=1):
+        y_grid = y_grid + c * uk(x_grid, i)
+
+    return x_grid, y_grid, tuple(float(v) for v in coeffs)

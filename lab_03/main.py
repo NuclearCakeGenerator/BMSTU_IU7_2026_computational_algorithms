@@ -2,13 +2,25 @@ from __future__ import annotations
 
 import tkinter as tk
 from tkinter import ttk
+from typing import Any
 
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.lines import Line2D
 from matplotlib.patches import Patch
 
-from utils import Dataset, PolynomialDegree, approximate_polynomial, polynomial
+from utils import (
+    Dataset,
+    PolynomialDegree,
+    approximate_polynomial,
+    fit_exponential_model,
+    fit_linear_model,
+    fit_power_model,
+    fit_quadratic_model,
+    polynomial,
+    root_mean_square_error,
+    solve_boundary_problem,
+)
 
 
 TASK_1_DOTS: list[tuple[float, float]] = [
@@ -79,6 +91,15 @@ TASK_2_WEIGHTS: list[float] = [
     100,
 ]
 
+TASK_3_POINTS: list[tuple[float, float]] = [
+    (0.5, 4.5),
+    (1.0, 1.6),
+    (1.5, 0.55),
+    (2.0, 1.6),
+    (2.5, 0.15),
+    (3.0, 0.08),
+]
+
 
 class Lab03App:
     def __init__(self, root: tk.Tk) -> None:
@@ -122,6 +143,10 @@ class Lab03App:
             self._render_task_1()
         elif task == "2":
             self._render_task_2()
+        elif task == "3":
+            self._render_task_3()
+        elif task == "4":
+            self._render_task_4()
         else:
             self._render_placeholder(task)
 
@@ -205,6 +230,44 @@ class Lab03App:
             text="Approximate",
             command=lambda: self._plot_task_2(dataset),
         ).pack(pady=10)
+
+    def _render_task_3(self) -> None:
+        ttk.Label(
+            self.content_frame,
+            text="Task 3: Best nonlinear model selection",
+            font=("Arial", 12, "bold"),
+        ).pack(anchor="w", pady=(0, 8))
+
+        self._build_readonly_table(self.content_frame, ["x", "y"], TASK_3_POINTS)
+
+        ttk.Button(
+            self.content_frame,
+            text="Find best model",
+            command=self._plot_task_3,
+        ).pack(pady=10)
+
+    def _render_task_4(self) -> None:
+        page = ttk.Frame(self.content_frame)
+        page.pack(fill=tk.BOTH, expand=True)
+
+        ttk.Label(
+            page,
+            text="Task 4: Boundary-value ODE approximation (m=2 and m=3)",
+            font=("Arial", 12, "bold"),
+        ).pack(anchor="w", pady=(0, 8))
+
+        ttk.Label(
+            page,
+            text=(
+                "Equation in implementation: y'' + x*y' + x*y = 0, " "y(0)=1, y(1)=0"
+            ),
+        ).pack(anchor="w", pady=(0, 12))
+
+        ttk.Button(
+            page,
+            text="Solve and plot m=2/m=3",
+            command=self._plot_task_4,
+        ).pack(anchor="w")
 
     def _plot_task_1(self, dataset: Dataset) -> None:
         dataset_unweighted = Dataset(dataset.dots)
@@ -307,8 +370,15 @@ class Lab03App:
 
         fig = plt.figure(figsize=(11, 8))
         ax = fig.add_subplot(111, projection="3d")
+        ax3d: Any = ax
 
-        ax.scatter(x_values, y_values, z_values, color="black", s=25)
+        ax3d.scatter(
+            x_values,
+            y_values,
+            zs=z_values,
+            color="black",
+            s=25,
+        )
         ax.plot_surface(
             x_grid,
             y_grid,
@@ -380,6 +450,75 @@ class Lab03App:
         ]
         ax.legend(handles=legend_handles, loc="upper left")
 
+        plt.tight_layout()
+        plt.show()
+
+    def _plot_task_3(self) -> None:
+        points = TASK_3_POINTS
+
+        a_pow, b_pow = fit_power_model(points)
+        a_exp, b_exp = fit_exponential_model(points)
+        a_lin, b_lin = fit_linear_model(points)
+        a0_q, a1_q, a2_q = fit_quadratic_model(points)
+
+        model_predictors = {
+            "a*x^b": lambda x: a_pow * x**b_pow,
+            "a*exp(b*x)": lambda x: a_exp * np.exp(b_exp * x),
+            "a + b*x": lambda x: a_lin + b_lin * x,
+            "a0 + a1*x + a2*x^2": lambda x: a0_q + a1_q * x + a2_q * x * x,
+        }
+
+        errors = {
+            name: root_mean_square_error(points, predictor)
+            for name, predictor in model_predictors.items()
+        }
+        best_name = min(errors.items(), key=lambda item: item[1])[0]
+
+        x_values = np.array([p[0] for p in points], dtype=float)
+        y_values = np.array([p[1] for p in points], dtype=float)
+        x_grid = np.linspace(np.min(x_values), np.max(x_values), 280)
+
+        fig, ax = plt.subplots(figsize=(10, 6))
+        ax.scatter(x_values, y_values, color="black", s=40, label="Table points")
+
+        colors = {
+            "a*x^b": "tab:blue",
+            "a*exp(b*x)": "tab:green",
+            "a + b*x": "tab:orange",
+            "a0 + a1*x + a2*x^2": "tab:red",
+        }
+        for name, predictor in model_predictors.items():
+            y_grid = predictor(x_grid)
+            ax.plot(
+                x_grid,
+                y_grid,
+                linewidth=2,
+                color=colors[name],
+                label=f"{name}, RMSE={errors[name]:.4f}",
+            )
+
+        ax.set_title(f"Task 3: Best model is {best_name}")
+        ax.set_xlabel("x")
+        ax.set_ylabel("y")
+        ax.grid(True, alpha=0.25)
+        ax.legend(fontsize=9)
+        plt.tight_layout()
+        plt.show()
+
+    def _plot_task_4(self) -> None:
+        x2, y2, coeffs2 = solve_boundary_problem(m=2)
+        x3, y3, coeffs3 = solve_boundary_problem(m=3)
+
+        fig, ax = plt.subplots(figsize=(10, 6))
+        ax.plot(x2, y2, color="tab:blue", linewidth=2, label=f"m=2, C={coeffs2}")
+        ax.plot(x3, y3, color="tab:red", linewidth=2, label=f"m=3, C={coeffs3}")
+        ax.scatter([0.0, 1.0], [1.0, 0.0], color="black", s=45, label="Boundary nodes")
+
+        ax.set_title("Task 4: Approximate ODE solution")
+        ax.set_xlabel("x")
+        ax.set_ylabel("y(x)")
+        ax.grid(True, alpha=0.25)
+        ax.legend(fontsize=9)
         plt.tight_layout()
         plt.show()
 
