@@ -22,7 +22,6 @@ from utils import (
     solve_boundary_problem,
 )
 
-
 TASK_1_DOTS: list[tuple[float, float]] = [
     (-4.0, 1.5),
     (-3.0, 4.6),
@@ -92,10 +91,10 @@ TASK_2_WEIGHTS: list[float] = [
 ]
 
 TASK_3_POINTS: list[tuple[float, float]] = [
-    (0.5, 4.5),
+    (0.5, 10.5),
     (1.0, 1.6),
     (1.5, 0.55),
-    (2.0, 1.6),
+    (2.0, 0.26),
     (2.5, 0.15),
     (3.0, 0.08),
 ]
