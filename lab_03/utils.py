@@ -160,12 +160,12 @@ def fit_exponential_model(points: Sequence[tuple[float, float]]) -> tuple[float,
     return a, b
 
 
-def fit_linear_model(points: Sequence[tuple[float, float]]) -> tuple[float, float]:
+def fit_fraction_model(points: Sequence[tuple[float, float]]) -> tuple[float, float]:
     c0, c1 = approximate_polynomial(Dataset(points), PolynomialDegree.LINEAR)
     return c0, c1
 
 
-def fit_quadratic_model(
+def fit_complex_fraction_model(
     points: Sequence[tuple[float, float]],
 ) -> tuple[float, float, float]:
     c0, c1, c2 = approximate_polynomial(Dataset(points), PolynomialDegree.QUADRATIC)

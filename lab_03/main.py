@@ -14,9 +14,9 @@ from utils import (
     PolynomialDegree,
     approximate_polynomial,
     fit_exponential_model,
-    fit_linear_model,
+    fit_fraction_model,
     fit_power_model,
-    fit_quadratic_model,
+    fit_complex_fraction_model,
     polynomial,
     root_mean_square_error,
     solve_boundary_problem,
@@ -457,14 +457,16 @@ class Lab03App:
 
         a_pow, b_pow = fit_power_model(points)
         a_exp, b_exp = fit_exponential_model(points)
-        a_lin, b_lin = fit_linear_model(points)
-        a0_q, a1_q, a2_q = fit_quadratic_model(points)
+        a_frac, b_frac = fit_fraction_model(points)
+        a0_com_frac, a1_com_frac, a2_com_frac = fit_complex_fraction_model(points)
 
         model_predictors = {
             "a*x^b": lambda x: a_pow * x**b_pow,
             "a*exp(b*x)": lambda x: a_exp * np.exp(b_exp * x),
-            "a + b*x": lambda x: a_lin + b_lin * x,
-            "a0 + a1*x + a2*x^2": lambda x: a0_q + a1_q * x + a2_q * x * x,
+            "a + b/x": lambda x: a_frac + b_frac * x,
+            "a0 / (a1 + a2*x)": lambda x: a0_com_frac
+            + a1_com_frac * x
+            + a2_com_frac * x * x,
         }
 
         errors = {
@@ -483,8 +485,8 @@ class Lab03App:
         colors = {
             "a*x^b": "tab:blue",
             "a*exp(b*x)": "tab:green",
-            "a + b*x": "tab:orange",
-            "a0 + a1*x + a2*x^2": "tab:red",
+            "a + b/x": "tab:orange",
+            "a0 / (a1 + a2*x)": "tab:red",
         }
         for name, predictor in model_predictors.items():
             y_grid = predictor(x_grid)
