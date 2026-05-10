@@ -429,25 +429,33 @@ class Lab03App:
                 facecolor="tab:blue",
                 edgecolor="tab:blue",
                 alpha=0.28,
-                label="Unweighted linear",
+                label=f"Unweighted linear {linear_unweighted[0]} + "
+                f"{linear_unweighted[1]}*x + {linear_unweighted[2]}*y",
             ),
             Patch(
                 facecolor="tab:green",
                 edgecolor="tab:green",
                 alpha=0.28,
-                label="Unweighted quadratic",
+                label=f"Unweighted quadratic {quadratic_unweighted[0]:.4f} + "
+                f"{quadratic_unweighted[1]:.4f}*x + {quadratic_unweighted[2]:.4f}*y + "
+                f"{quadratic_unweighted[3]:.4f}*x^2 + {quadratic_unweighted[4]:.4f}*xy "
+                f"+ {quadratic_unweighted[5]:.4f}*y^2",
             ),
             Patch(
                 facecolor="tab:orange",
                 edgecolor="tab:orange",
                 alpha=0.28,
-                label="Weighted linear",
+                label=f"Weighted linear {linear_weighted[0]} + "
+                f"{linear_weighted[1]}*x + {linear_weighted[2]}*y",
             ),
             Patch(
                 facecolor="tab:red",
                 edgecolor="tab:red",
                 alpha=0.28,
-                label="Weighted quadratic",
+                label=f"Weighted quadratic {quadratic_weighted[0]:.4f} + "
+                f"{quadratic_weighted[1]:.4f}*x + {quadratic_weighted[2]:.4f}*y + "
+                f"{quadratic_weighted[3]:.4f}*x^2 + {quadratic_weighted[4]:.4f}*xy + "
+                f"{quadratic_weighted[5]:.4f}*y^2",
             ),
         ]
         ax.legend(handles=legend_handles, loc="upper left")
