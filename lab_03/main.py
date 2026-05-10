@@ -299,14 +299,16 @@ class Lab03App:
             y_linear_unweighted,
             color="tab:blue",
             linewidth=2,
-            label="Unweighted linear",
+            label=f"Unweighted linear {linear_unweighted[0]} + "
+            f"{linear_unweighted[1]}*x",
         )
         ax.plot(
             x_grid,
             y_quadratic_unweighted,
             color="tab:green",
             linewidth=2,
-            label="Unweighted quadratic",
+            label=f"Unweighted quadratic {quadratic_unweighted[0]} + "
+            f"{quadratic_unweighted[1]}*x + {quadratic_unweighted[2]}*x^2",
         )
         ax.plot(
             x_grid,
@@ -314,7 +316,7 @@ class Lab03App:
             color="tab:orange",
             linewidth=2,
             linestyle="--",
-            label="Weighted linear",
+            label=f"Weighted linear {linear_weighted[0]} + {linear_weighted[1]}*x",
         )
         ax.plot(
             x_grid,
@@ -322,7 +324,8 @@ class Lab03App:
             color="tab:red",
             linewidth=2,
             linestyle="--",
-            label="Weighted quadratic",
+            label=f"Unweighted quadratic {quadratic_weighted[0]} + "
+            f"{quadratic_weighted[1]}*x + {quadratic_weighted[2]}*x^2",
         )
 
         ax.set_title("Task 1: Approximation")
