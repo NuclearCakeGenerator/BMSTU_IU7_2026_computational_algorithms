@@ -161,7 +161,12 @@ def fit_exponential_model(points: Sequence[tuple[float, float]]) -> tuple[float,
 
 
 def fit_fraction_model(points: Sequence[tuple[float, float]]) -> tuple[float, float]:
-    c0, c1 = approximate_polynomial(Dataset(points), PolynomialDegree.LINEAR)
+    transformed = []
+    for x, y in points:
+        if x == 0:
+            raise ValueError("Divizion by SERO!")
+        transformed.append((1 / x, y))
+    c0, c1 = approximate_polynomial(Dataset(transformed), PolynomialDegree.LINEAR)
     return c0, c1
 
 
