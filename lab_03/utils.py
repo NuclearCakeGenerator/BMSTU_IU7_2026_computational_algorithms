@@ -172,9 +172,14 @@ def fit_fraction_model(points: Sequence[tuple[float, float]]) -> tuple[float, fl
 
 def fit_complex_fraction_model(
     points: Sequence[tuple[float, float]],
-) -> tuple[float, float, float]:
-    c0, c1, c2 = approximate_polynomial(Dataset(points), PolynomialDegree.QUADRATIC)
-    return c0, c1, c2
+) -> tuple[float, float]:
+    transformed = []
+    for x, y in points:
+        if x == 0:
+            raise ValueError("Divizion by SERO!")
+        transformed.append((x, 1 / y))
+    c0, c1 = approximate_polynomial(Dataset(transformed), PolynomialDegree.LINEAR)
+    return c0, c1
 
 
 def solve_boundary_problem(

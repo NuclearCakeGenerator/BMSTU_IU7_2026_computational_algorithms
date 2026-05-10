@@ -458,7 +458,8 @@ class Lab03App:
         a_pow, b_pow = fit_power_model(points)
         a_exp, b_exp = fit_exponential_model(points)
         a_frac, b_frac = fit_fraction_model(points)
-        a0_com_frac, a1_com_frac, a2_com_frac = fit_complex_fraction_model(points)
+        a1_com_frac, a2_com_frac = fit_complex_fraction_model(points)
+        a0_com_frac = 1
 
         model_predictors = {
             f"{a_pow}*x^({b_pow})": lambda x: a_pow * x**b_pow,
