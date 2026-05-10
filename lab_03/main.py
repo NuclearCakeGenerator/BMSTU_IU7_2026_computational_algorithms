@@ -461,12 +461,11 @@ class Lab03App:
         a0_com_frac, a1_com_frac, a2_com_frac = fit_complex_fraction_model(points)
 
         model_predictors = {
-            "a*x^b": lambda x: a_pow * x**b_pow,
-            "a*exp(b*x)": lambda x: a_exp * np.exp(b_exp * x),
-            "a + b/x": lambda x: a_frac + b_frac * x,
-            "a0 / (a1 + a2*x)": lambda x: a0_com_frac
-            + a1_com_frac * x
-            + a2_com_frac * x * x,
+            f"{a_pow}*x^({b_pow})": lambda x: a_pow * x**b_pow,
+            f"{a_exp}*exp({b_exp}*x)": lambda x: a_exp * np.exp(b_exp * x),
+            f"{a_frac} + {b_frac}/x": lambda x: a_frac + b_frac / x,
+            f"{a0_com_frac} / ({a1_com_frac} + {a2_com_frac}*x)": lambda x: a0_com_frac
+            / (a1_com_frac + a2_com_frac * x),
         }
 
         errors = {
@@ -483,10 +482,10 @@ class Lab03App:
         ax.scatter(x_values, y_values, color="black", s=40, label="Table points")
 
         colors = {
-            "a*x^b": "tab:blue",
-            "a*exp(b*x)": "tab:green",
-            "a + b/x": "tab:orange",
-            "a0 / (a1 + a2*x)": "tab:red",
+            f"{a_pow}*x^({b_pow})": "tab:blue",
+            f"{a_exp}*exp({b_exp}*x)": "tab:green",
+            f"{a_frac} + {b_frac}/x": "tab:orange",
+            f"{a0_com_frac} / ({a1_com_frac} + {a2_com_frac}*x)": "tab:red",
         }
         for name, predictor in model_predictors.items():
             y_grid = predictor(x_grid)
