@@ -259,17 +259,6 @@ def solve_boundary_problem(
     def integrate_uniform(func_values, x):
         return np.trapezoid(func_values, x)
 
-    # ============================================================
-    # MATRIX ASSEMBLY
-    #
-    # E(C) = ∫ (r0 + Σ Ck rk)^2 dx
-    #
-    # Gives:
-    #
-    # A_ij = ∫ ri*rj
-    # b_i  = -∫ r0*ri
-    # ============================================================
-
     previous_coeffs = None
 
     for refinement in range(max_refinements):
@@ -305,11 +294,7 @@ def solve_boundary_problem(
 
             b[i] = -integrate_uniform(integrand, x)
 
-        try:
-            coeffs = np.linalg.solve(A, b)
-
-        except np.linalg.LinAlgError:
-            coeffs = np.linalg.pinv(A) @ b
+        coeffs = np.linalg.solve(A, b)
 
         if previous_coeffs is not None:
 
