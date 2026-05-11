@@ -184,72 +184,190 @@ def fit_complex_fraction_model(
 
 def solve_boundary_problem(
     m: int,
-    sample_count: int = 80,
+    integration_samples: int = 200,
+    convergence_tol: float = 1e-8,
+    max_refinements: int = 8,
 ) -> tuple[np.ndarray, np.ndarray, tuple[float, ...]]:
     """
-    Solve y'' + x*y' + x*y = 0, y(0)=1, y(1)=0 by least squares trial functions.
+    Solve:
 
-    y(x) = u0(x) + sum(Ck * uk(x), k=1..m)
-    where u0(x)=1-x and uk(x)=x^k(1-x).
+        y'' + x*y' + x*y = 0
+        y(0)=1
+        y(1)=0
+
+    using least-squares minimization of residual integral:
+
+        E(C) = ∫ R(x,C)^2 dx
+
+    with basis:
+
+        y(x) = u0(x) + Σ Ck uk(x)
+
+    where:
+        u0(x) = 1 - x
+        uk(x) = x^k (1-x)
+
+    Matrix elements are computed by numerical integration
+    on a uniform grid with convergence refinement.
     """
+
+    import numpy as np
+
     if m < 1:
         raise ValueError("m must be >= 1")
 
-    x_samples = np.linspace(0.0, 1.0, sample_count + 2)[1:-1]
-
-    def u0(x: np.ndarray) -> np.ndarray:
+    def u0(x):
         return 1.0 - x
 
-    def u0_d1(x: np.ndarray) -> np.ndarray:
+    def u0_d1(x):
         return -np.ones_like(x)
 
-    def u0_d2(x: np.ndarray) -> np.ndarray:
+    def u0_d2(x):
         return np.zeros_like(x)
 
-    def uk(x: np.ndarray, k: int) -> np.ndarray:
-        return x**k - x ** (k + 1)
+    def uk(x, k):
+        return x**k * (1.0 - x)
 
-    def uk_d1(x: np.ndarray, k: int) -> np.ndarray:
+    def uk_d1(x, k):
         return k * x ** (k - 1) - (k + 1) * x**k
 
-    def uk_d2(x: np.ndarray, k: int) -> np.ndarray:
+    def uk_d2(x, k):
         result = -k * (k + 1) * x ** (k - 1)
+
         if k >= 2:
             result += k * (k - 1) * x ** (k - 2)
+
         return result
 
-    def operator(
-        y: np.ndarray,
-        dy: np.ndarray,
-        d2y: np.ndarray,
-        x: np.ndarray,
-    ) -> np.ndarray:
+    # ============================================================
+    # DIFFERENTIAL OPERATOR
+    # ============================================================
+
+    def operator(y, dy, d2y, x):
         return d2y + x * dy + x * y
 
-    rhs = -operator(u0(x_samples), u0_d1(x_samples), u0_d2(x_samples), x_samples)
+    # ============================================================
+    # RESIDUAL BASIS FUNCTIONS
+    #
+    # r0 = L[u0]
+    # rk = L[uk]
+    # ============================================================
 
-    columns = []
-    for k in range(1, m + 1):
-        col = operator(
-            uk(x_samples, k),
-            uk_d1(x_samples, k),
-            uk_d2(x_samples, k),
-            x_samples,
+    def r0(x):
+        return operator(
+            u0(x),
+            u0_d1(x),
+            u0_d2(x),
+            x,
         )
-        columns.append(col)
 
-    matrix = np.column_stack(columns)
-    normal_matrix = matrix.T @ matrix
-    normal_rhs = matrix.T @ rhs
+    def rk(x, k):
+        return operator(
+            uk(x, k),
+            uk_d1(x, k),
+            uk_d2(x, k),
+            x,
+        )
 
-    try:
-        coeffs = np.linalg.solve(normal_matrix, normal_rhs)
-    except np.linalg.LinAlgError:
-        coeffs = np.linalg.pinv(normal_matrix) @ normal_rhs
+    # ============================================================
+    # NUMERICAL INTEGRATION
+    #
+    # Uniform-grid trapezoidal rule
+    # ============================================================
 
-    x_grid = np.linspace(0.0, 1.0, 240)
+    def integrate_uniform(func_values, x):
+        return np.trapezoid(func_values, x)
+
+    # ============================================================
+    # MATRIX ASSEMBLY
+    #
+    # E(C) = ∫ (r0 + Σ Ck rk)^2 dx
+    #
+    # Gives:
+    #
+    # A_ij = ∫ ri*rj
+    # b_i  = -∫ r0*ri
+    # ============================================================
+
+    previous_coeffs = None
+
+    for refinement in range(max_refinements):
+
+        n = integration_samples * (2**refinement)
+
+        x = np.linspace(0.0, 1.0, n)
+
+        # evaluate residual basis functions
+        residual_basis = []
+
+        for k in range(1, m + 1):
+            residual_basis.append(rk(x, k))
+
+        residual_basis = np.array(residual_basis)
+
+        residual_0 = r0(x)
+
+        # --------------------------------------------------------
+        # Build Gram matrix
+        # --------------------------------------------------------
+
+        A = np.zeros((m, m))
+
+        for i in range(m):
+            for j in range(m):
+
+                integrand = residual_basis[i] * residual_basis[j]
+
+                A[i, j] = integrate_uniform(integrand, x)
+
+        # --------------------------------------------------------
+        # Build RHS
+        # --------------------------------------------------------
+
+        b = np.zeros(m)
+
+        for i in range(m):
+
+            integrand = residual_0 * residual_basis[i]
+
+            b[i] = -integrate_uniform(integrand, x)
+
+        # --------------------------------------------------------
+        # Solve linear system
+        # --------------------------------------------------------
+
+        try:
+            coeffs = np.linalg.solve(A, b)
+
+        except np.linalg.LinAlgError:
+            coeffs = np.linalg.pinv(A) @ b
+
+        # --------------------------------------------------------
+        # Convergence check
+        # --------------------------------------------------------
+
+        if previous_coeffs is not None:
+
+            delta = np.linalg.norm(coeffs - previous_coeffs)
+
+            if delta < convergence_tol:
+                break
+
+        previous_coeffs = coeffs.copy()
+
+    # ============================================================
+    # BUILD FINAL SOLUTION
+    # ============================================================
+
+    x_grid = np.linspace(0.0, 1.0, 400)
+
     y_grid = u0(x_grid)
-    for i, c in enumerate(coeffs, start=1):
-        y_grid = y_grid + c * uk(x_grid, i)
 
-    return x_grid, y_grid, tuple(float(v) for v in coeffs)
+    for k, c in enumerate(coeffs, start=1):
+        y_grid += c * uk(x_grid, k)
+
+    return (
+        x_grid,
+        y_grid,
+        tuple(float(v) for v in coeffs),
+    )
