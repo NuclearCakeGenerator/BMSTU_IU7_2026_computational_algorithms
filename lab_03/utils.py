@@ -185,13 +185,13 @@ def fit_complex_fraction_model(
 def solve_boundary_problem(
     m: int,
     integration_samples: int = 200,
-    convergence_tol: float = 1e-8,
-    max_refinements: int = 8,
+    convergence_tol: float = 1e-12,
+    max_refinements: int = 20,
 ) -> tuple[np.ndarray, np.ndarray, tuple[float, ...]]:
     """
     Solve:
 
-        y'' + x*y' + x*y = 0
+        y'' + x*y' + y = 2x
         y(0)=1
         y(1)=0
 
@@ -210,8 +210,6 @@ def solve_boundary_problem(
     Matrix elements are computed by numerical integration
     on a uniform grid with convergence refinement.
     """
-
-    import numpy as np
 
     if m < 1:
         raise ValueError("m must be >= 1")
@@ -239,19 +237,8 @@ def solve_boundary_problem(
 
         return result
 
-    # ============================================================
-    # DIFFERENTIAL OPERATOR
-    # ============================================================
-
     def operator(y, dy, d2y, x):
-        return d2y + x * dy + x * y
-
-    # ============================================================
-    # RESIDUAL BASIS FUNCTIONS
-    #
-    # r0 = L[u0]
-    # rk = L[uk]
-    # ============================================================
+        return d2y + x * dy + y - 2 * x
 
     def r0(x):
         return operator(
@@ -268,12 +255,6 @@ def solve_boundary_problem(
             uk_d2(x, k),
             x,
         )
-
-    # ============================================================
-    # NUMERICAL INTEGRATION
-    #
-    # Uniform-grid trapezoidal rule
-    # ============================================================
 
     def integrate_uniform(func_values, x):
         return np.trapezoid(func_values, x)
@@ -307,10 +288,6 @@ def solve_boundary_problem(
 
         residual_0 = r0(x)
 
-        # --------------------------------------------------------
-        # Build Gram matrix
-        # --------------------------------------------------------
-
         A = np.zeros((m, m))
 
         for i in range(m):
@@ -320,10 +297,6 @@ def solve_boundary_problem(
 
                 A[i, j] = integrate_uniform(integrand, x)
 
-        # --------------------------------------------------------
-        # Build RHS
-        # --------------------------------------------------------
-
         b = np.zeros(m)
 
         for i in range(m):
@@ -332,19 +305,11 @@ def solve_boundary_problem(
 
             b[i] = -integrate_uniform(integrand, x)
 
-        # --------------------------------------------------------
-        # Solve linear system
-        # --------------------------------------------------------
-
         try:
             coeffs = np.linalg.solve(A, b)
 
         except np.linalg.LinAlgError:
             coeffs = np.linalg.pinv(A) @ b
-
-        # --------------------------------------------------------
-        # Convergence check
-        # --------------------------------------------------------
 
         if previous_coeffs is not None:
 
@@ -354,10 +319,6 @@ def solve_boundary_problem(
                 break
 
         previous_coeffs = coeffs.copy()
-
-    # ============================================================
-    # BUILD FINAL SOLUTION
-    # ============================================================
 
     x_grid = np.linspace(0.0, 1.0, 400)
 

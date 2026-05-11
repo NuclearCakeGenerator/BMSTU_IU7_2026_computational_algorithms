@@ -258,7 +258,7 @@ class Lab03App:
         ttk.Label(
             page,
             text=(
-                "Equation in implementation: y'' + x*y' + x*y = 0, " "y(0)=1, y(1)=0"
+                "Equation in implementation: y'' + x*y' + y = 2x, " "y(0)=1, y(1)=0"
             ),
         ).pack(anchor="w", pady=(0, 12))
 
