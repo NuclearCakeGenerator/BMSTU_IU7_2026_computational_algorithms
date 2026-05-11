@@ -257,9 +257,7 @@ class Lab03App:
 
         ttk.Label(
             page,
-            text=(
-                "Equation in implementation: y'' + x*y' + y = 2x, " "y(0)=1, y(1)=0"
-            ),
+            text=("Equation in implementation: y'' + x*y' + y = 2x, " "y(0)=1, y(1)=0"),
         ).pack(anchor="w", pady=(0, 12))
 
         ttk.Button(
@@ -522,8 +520,20 @@ class Lab03App:
         x3, y3, coeffs3 = solve_boundary_problem(m=3)
 
         fig, ax = plt.subplots(figsize=(10, 6))
-        ax.plot(x2, y2, color="tab:blue", linewidth=2, label=f"m=2, C={coeffs2}")
-        ax.plot(x3, y3, color="tab:red", linewidth=2, label=f"m=3, C={coeffs3}")
+        ax.plot(
+            x2,
+            y2,
+            color="tab:blue",
+            linewidth=2,
+            label=f"m=2, C={coeffs2[0]:.6f}, {coeffs2[1]:.6f}",
+        )
+        ax.plot(
+            x3,
+            y3,
+            color="tab:red",
+            linewidth=2,
+            label=f"m=3, C={coeffs3[0]:.6f}, {coeffs3[1]:.6f}, {coeffs3[2]:.6f}",
+        )
         ax.scatter([0.0, 1.0], [1.0, 0.0], color="black", s=45, label="Boundary nodes")
 
         ax.set_title("Task 4: Approximate ODE solution")
