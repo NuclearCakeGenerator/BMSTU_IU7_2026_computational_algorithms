@@ -113,7 +113,8 @@ class Lab04App:
         ttk.Label(
             frame,
             text=(
-                "Система: 20*sin(0.7x - 0.7y) + 7x + 7y = 0, 20*ln(x - y) - x - y - 6 = 0. "
+                "Система: 20*sin(0.7x - 0.7y) + 7x + 7y = 0, "
+                "20*ln(x - y) - x - y - 6 = 0. "
                 "Показывается сравнение для eps = 1e-2, 1e-4, 1e-6."
             ),
             wraplength=780,
