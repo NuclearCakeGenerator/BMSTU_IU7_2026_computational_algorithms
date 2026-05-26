@@ -3,7 +3,6 @@ from __future__ import annotations
 import math
 from typing import Callable
 
-
 Integrand = Callable[[float], float]
 Integrator = Callable[[Integrand, float, float, int], float]
 
@@ -126,7 +125,7 @@ def solve_task1_newton(
 
         x, y = x_next, y_next
         f1_next, f2_next = task1_residuals(x, y)
-        
+
         if max(abs(dx), abs(dy)) < eps or max(abs(f1_next), abs(f2_next)) < eps:
             return x, y, iteration, f1_next, f2_next
 
@@ -169,8 +168,7 @@ def bisection_root_monotonic(
         return right, 0
     if f_left * f_right > 0.0:
         raise ValueError(
-            "Function values at interval ends must have opposite signs "
-            "for bisection"
+            "Function values at interval ends must have opposite signs " "for bisection"
         )
 
     a, b = left, right
@@ -232,3 +230,105 @@ def solve_inverse_laplace(
     )
 
     return x_root, phi_at_root, iterations
+
+
+def _solve_tridiagonal(
+    lower: list[float],
+    diagonal: list[float],
+    upper: list[float],
+    rhs: list[float],
+) -> list[float]:
+    size = len(diagonal)
+    if size == 0:
+        return []
+
+    modified_upper = [0.0] * size
+    modified_rhs = [0.0] * size
+
+    first_pivot = diagonal[0]
+    if abs(first_pivot) < 1e-15:
+        raise ValueError("Tridiagonal system has a zero pivot")
+
+    modified_upper[0] = upper[0] / first_pivot if size > 1 else 0.0
+    modified_rhs[0] = rhs[0] / first_pivot
+
+    for index in range(1, size):
+        pivot = diagonal[index] - lower[index] * modified_upper[index - 1]
+        if abs(pivot) < 1e-15:
+            raise ValueError("Tridiagonal system has a zero pivot")
+
+        modified_upper[index] = upper[index] / pivot if index < size - 1 else 0.0
+        modified_rhs[index] = (
+            rhs[index] - lower[index] * modified_rhs[index - 1]
+        ) / pivot
+
+    solution = [0.0] * size
+    solution[-1] = modified_rhs[-1]
+    for index in range(size - 2, -1, -1):
+        solution[index] = (
+            modified_rhs[index]
+            - modified_upper[index] * solution[index + 1]
+        )
+
+    return solution
+
+
+def solve_task3_boundary_problem(
+    intervals: int,
+    eps: float,
+    max_iterations: int = 50,
+) -> tuple[list[float], list[float], int, float]:
+    if intervals < 2:
+        raise ValueError("Number of intervals must be >= 2")
+    if eps <= 0.0:
+        raise ValueError("Epsilon must be > 0")
+    if max_iterations < 1:
+        raise ValueError("max_iterations must be >= 1")
+
+    h = 1.0 / intervals
+    x_grid = [index * h for index in range(intervals + 1)]
+    y_grid = [1.0 + 2.0 * x for x in x_grid]
+
+    unknown_count = intervals - 1
+    if unknown_count == 0:
+        return x_grid, y_grid, 0, 0.0
+
+    for iteration in range(1, max_iterations + 1):
+        lower = [0.0] * unknown_count
+        diagonal = [0.0] * unknown_count
+        upper = [0.0] * unknown_count
+        rhs = [0.0] * unknown_count
+
+        residual_max = 0.0
+        inv_h2 = 1.0 / (h * h)
+
+        for index in range(1, intervals):
+            y_left = y_grid[index - 1]
+            y_center = y_grid[index]
+            y_right = y_grid[index + 1]
+            x_value = x_grid[index]
+
+            residual = (
+                (y_left - 2.0 * y_center + y_right) * inv_h2
+                - y_center**3
+                - x_value**2
+            )
+            residual_max = max(residual_max, abs(residual))
+
+            row = index - 1
+            lower[row] = inv_h2 if row > 0 else 0.0
+            diagonal[row] = -2.0 * inv_h2 - 3.0 * y_center * y_center
+            upper[row] = inv_h2 if row < unknown_count - 1 else 0.0
+            rhs[row] = -residual
+
+        delta = _solve_tridiagonal(lower, diagonal, upper, rhs)
+
+        delta_max = 0.0
+        for index, correction in enumerate(delta, start=1):
+            y_grid[index] += correction
+            delta_max = max(delta_max, abs(correction))
+
+        if delta_max < eps or residual_max < eps:
+            return x_grid, y_grid, iteration, max(delta_max, residual_max)
+
+    return x_grid, y_grid, max_iterations, max(delta_max, residual_max)

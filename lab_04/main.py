@@ -3,7 +3,10 @@ from __future__ import annotations
 import tkinter as tk
 from tkinter import messagebox, ttk
 
+import matplotlib.pyplot as plt
+
 from utils import solve_inverse_laplace, solve_task1_newton
+from utils import solve_task3_boundary_problem
 
 
 class Lab04App:
@@ -18,6 +21,10 @@ class Lab04App:
         self.task1_y0_var = tk.DoubleVar(value=0.0)
         self.task1_max_iterations_var = tk.IntVar(value=50)
 
+        self.task3_intervals_var = tk.IntVar(value=20)
+        self.task3_eps_var = tk.DoubleVar(value=1e-6)
+        self.task3_max_iterations_var = tk.IntVar(value=50)
+
         self.target_phi_var = tk.DoubleVar(value=0.2)
         self.left_var = tk.DoubleVar(value=0.0)
         self.right_var = tk.DoubleVar(value=2.0)
@@ -27,6 +34,7 @@ class Lab04App:
 
         self.result_var = tk.StringVar(value="")
         self.task1_summary_var = tk.StringVar(value="")
+        self.task3_summary_var = tk.StringVar(value="")
 
         self._build_layout()
         self._render_current_task()
@@ -71,6 +79,9 @@ class Lab04App:
             return
         if task == "2":
             self._render_task_2()
+            return
+        if task == "3":
+            self._render_task_3()
         else:
             self._render_placeholder(task)
 
@@ -82,7 +93,7 @@ class Lab04App:
             frame,
             text=(
                 f"Задача {task_id} пока не реализована.\n"
-                "Выберите задачу 1 или 2 для текущей реализации."
+                "Выберите задачу 1, 2 или 3 для текущей реализации."
             ),
             font=("Segoe UI", 14),
             justify="center",
@@ -102,7 +113,7 @@ class Lab04App:
         ttk.Label(
             frame,
             text=(
-                "Система: 20*sin(0.7x + 0.7y) - x = 0, 20*ln(x - y) - 6x - y = 0. "
+                "Система: 20*sin(0.7x - 0.7y) + 7x + 7y = 0, 20*ln(x - y) - x - y - 6 = 0. "
                 "Показывается сравнение для eps = 1e-2, 1e-4, 1e-6."
             ),
             wraplength=780,
@@ -154,6 +165,67 @@ class Lab04App:
         scroll.pack(side=tk.RIGHT, fill=tk.Y)
 
         self.task1_results_tree = tree
+
+        frame.columnconfigure(0, weight=1)
+        frame.rowconfigure(5, weight=1)
+
+    def _render_task_3(self) -> None:
+        frame = ttk.Frame(self.content)
+        frame.pack(fill=tk.BOTH, expand=True)
+
+        ttk.Label(
+            frame,
+            text="Задача 3: краевая задача y'' - y^3 = x^2, y(0)=1, y(1)=3",
+            font=("Segoe UI", 12, "bold"),
+        ).grid(row=0, column=0, columnspan=2, sticky="w", pady=(0, 10))
+
+        ttk.Label(
+            frame,
+            text=(
+                "Используются линейзация Ньютона и метод прогонки для трёхдиагональной "
+                "системы. Начальное приближение берётся как линейная интерполяция "
+                "между "
+                "краевыми условиями."
+            ),
+            wraplength=780,
+        ).grid(row=1, column=0, columnspan=2, sticky="w", pady=(0, 12))
+
+        form = ttk.LabelFrame(frame, text="Параметры сетки", padding=10)
+        form.grid(row=2, column=0, sticky="nw")
+
+        self._add_entry(form, 0, "Число интервалов N:", self.task3_intervals_var)
+        self._add_entry(form, 1, "Точность ε:", self.task3_eps_var)
+        self._add_entry(form, 2, "Макс. итераций:", self.task3_max_iterations_var)
+
+        ttk.Button(
+            frame,
+            text="Решить задачу 3",
+            command=self._solve_task_3,
+        ).grid(row=3, column=0, sticky="w", pady=12)
+
+        summary_box = ttk.LabelFrame(frame, text="Итог", padding=10)
+        summary_box.grid(row=4, column=0, sticky="ew", pady=(0, 10))
+        ttk.Label(
+            summary_box,
+            textvariable=self.task3_summary_var,
+            justify="left",
+        ).pack(anchor="w")
+
+        table_box = ttk.LabelFrame(frame, text="Узлы решения", padding=10)
+        table_box.grid(row=5, column=0, sticky="nsew")
+
+        columns = ("x", "y")
+        tree = ttk.Treeview(table_box, columns=columns, show="headings", height=10)
+        scroll = ttk.Scrollbar(table_box, orient=tk.VERTICAL, command=tree.yview)
+        tree.configure(yscrollcommand=scroll.set)
+        tree.heading("x", text="x")
+        tree.heading("y", text="y")
+        tree.column("x", width=160, anchor="center")
+        tree.column("y", width=180, anchor="center")
+        tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        scroll.pack(side=tk.RIGHT, fill=tk.Y)
+
+        self.task3_results_tree = tree
 
         frame.columnconfigure(0, weight=1)
         frame.rowconfigure(5, weight=1)
@@ -312,6 +384,64 @@ class Lab04App:
             self.task1_summary_var.set("\n".join(lines))
         except Exception as exc:
             messagebox.showerror("Ошибка", str(exc))
+
+    def _solve_task_3(self) -> None:
+        tree = getattr(self, "task3_results_tree", None)
+        if tree is None:
+            return
+
+        for item in tree.get_children():
+            tree.delete(item)
+
+        try:
+            intervals = int(self.task3_intervals_var.get())
+            eps = float(self.task3_eps_var.get())
+            max_iterations = int(self.task3_max_iterations_var.get())
+
+            x_grid, y_grid, iterations, residual = solve_task3_boundary_problem(
+                intervals,
+                eps,
+                max_iterations=max_iterations,
+            )
+
+            for x_value, y_value in zip(x_grid, y_grid, strict=True):
+                tree.insert(
+                    "",
+                    tk.END,
+                    values=(f"{x_value:.6f}", f"{y_value:.10f}"),
+                )
+
+            self.task3_summary_var.set(
+                "\n".join(
+                    [
+                        f"N = {intervals}",
+                        f"Итераций Ньютона: {iterations}",
+                        f"Итоговая невязка/поправка: {residual:.3e}",
+                    ]
+                )
+            )
+
+            self._plot_task_3_solution(x_grid, y_grid)
+        except Exception as exc:
+            messagebox.showerror("Ошибка", str(exc))
+
+    def _plot_task_3_solution(self, x_grid: list[float], y_grid: list[float]) -> None:
+        fig, ax = plt.subplots(figsize=(8.5, 5.5))
+        ax.plot(
+            x_grid,
+            y_grid,
+            linewidth=2.2,
+            color="tab:blue",
+            label="Численное решение",
+        )
+        ax.scatter([0.0, 1.0], [1.0, 3.0], color="black", s=45, label="Границы")
+        ax.set_title("Задача 3: решение краевой задачи")
+        ax.set_xlabel("x")
+        ax.set_ylabel("y(x)")
+        ax.grid(True, alpha=0.25)
+        ax.legend()
+        plt.tight_layout()
+        plt.show()
 
 
 def main() -> None:
