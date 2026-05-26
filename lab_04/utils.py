@@ -124,9 +124,9 @@ def solve_task1_newton(
                 "Newton iteration left the valid domain x - y > 0; adjust x0, y0"
             )
 
-        f1_next, f2_next = task1_residuals(x_next, y_next)
         x, y = x_next, y_next
-
+        f1_next, f2_next = task1_residuals(x, y)
+        
         if max(abs(dx), abs(dy)) < eps or max(abs(f1_next), abs(f2_next)) < eps:
             return x, y, iteration, f1_next, f2_next
 
