@@ -35,7 +35,9 @@ class Lab05App:
         frame = ttk.Frame(self.tab, padding=10)
         self.tab.add(frame, text="Задание 1")
 
-        ttk.Label(frame, text="Интеграл ∫_{-1}^1 |x|^k dx", font=(None, 12, "bold")).pack(anchor="w")
+        ttk.Label(
+            frame, text="Интеграл ∫_{-1}^1 |x|^k dx", font=(None, 12, "bold")
+        ).pack(anchor="w")
 
         form = ttk.Frame(frame)
         form.pack(anchor="w", pady=6)
@@ -44,11 +46,17 @@ class Lab05App:
         self.k_var = tk.DoubleVar(value=1.0)
         ttk.Entry(form, textvariable=self.k_var, width=8).grid(row=0, column=1, padx=6)
 
-        ttk.Label(form, text="Nodes (for composite rules, total nodes):").grid(row=1, column=0, sticky="w")
+        ttk.Label(form, text="Nodes (for composite rules, total nodes):").grid(
+            row=1, column=0, sticky="w"
+        )
         self.nodes_var = tk.IntVar(value=3)
-        ttk.Entry(form, textvariable=self.nodes_var, width=8).grid(row=1, column=1, padx=6)
+        ttk.Entry(form, textvariable=self.nodes_var, width=8).grid(
+            row=1, column=1, padx=6
+        )
 
-        ttk.Button(frame, text="Compute and Compare", command=self._compute_task1).pack(pady=10)
+        ttk.Button(frame, text="Compute and Compare", command=self._compute_task1).pack(
+            pady=10
+        )
 
         self.task1_result = tk.Text(frame, height=12)
         self.task1_result.pack(fill=tk.BOTH, expand=True)
@@ -81,9 +89,12 @@ class Lab05App:
 
             out = []
             out.append(f"Analytic: {analytic:.12f}\n")
-            out.append(f"Trapezoid (nodes={nodes}): {val_trap:.12f}, err={abs(val_trap-analytic):.3e}\n")
-            out.append(f"Simpson (nodes={n_simp+1}): {val_simp:.12f}, err={abs(val_simp-analytic):.3e}\n")
-            out.append(f"Gauss ({nodes_gauss} nodes): {val_gauss:.12f}, err={abs(val_gauss-analytic):.3e}\n")
+            out.append(f"Trapezoid (nodes={nodes}): {val_trap:.12f}, err={abs(
+                    val_trap - analytic):.3e}\n")
+            out.append(f"Simpson (nodes={n_simp+1}): {val_simp:.12f}, err={abs(
+                    val_simp - analytic):.3e}\n")
+            out.append(f"Gauss ({nodes_gauss} nodes): {val_gauss:.12f}, err={abs(
+                    val_gauss - analytic):.3e}\n")
 
             self.task1_result.delete("1.0", tk.END)
             self.task1_result.insert(tk.END, "".join(out))
@@ -97,7 +108,9 @@ class Lab05App:
         left = ttk.Frame(frame)
         left.pack(side=tk.LEFT, fill=tk.Y, padx=8, pady=6)
 
-        ttk.Label(left, text="Double integral over region G", font=(None, 12, "bold")).pack()
+        ttk.Label(
+            left, text="Double integral over region G", font=(None, 12, "bold")
+        ).pack()
 
         self.alpha_var = tk.DoubleVar(value=0.25)
         self.beta_var = tk.DoubleVar(value=0.25)
@@ -111,7 +124,9 @@ class Lab05App:
         self._add_entry(left, "b (right):", self.b_var)
         self._add_entry(left, "eps:", self.eps_var)
 
-        ttk.Button(left, text="Load table & Compute", command=self._compute_task2).pack(pady=8)
+        ttk.Button(left, text="Load table & Compute", command=self._compute_task2).pack(
+            pady=8
+        )
 
         right = ttk.Frame(frame)
         right.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=8, pady=6)
@@ -148,7 +163,9 @@ class Lab05App:
             value = double_integral_iterated(dataset, phi, psi, a, b, eps=eps)
 
             self.task2_result.delete("1.0", tk.END)
-            self.task2_result.insert(tk.END, f"Double integral value I = {value:.12f}\n")
+            self.task2_result.insert(
+                tk.END, f"Double integral value I = {value:.12f}\n"
+            )
         except Exception as exc:
             messagebox.showerror("Error", str(exc))
 
