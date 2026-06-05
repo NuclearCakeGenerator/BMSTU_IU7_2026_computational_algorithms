@@ -112,11 +112,11 @@ class Lab05App:
             left, text="Double integral over region G", font=(None, 12, "bold")
         ).pack()
 
-        self.alpha_var = tk.DoubleVar(value=0.25)
-        self.beta_var = tk.DoubleVar(value=0.25)
+        self.alpha_var = tk.DoubleVar(value=1)
+        self.beta_var = tk.DoubleVar(value=4)
         self.a_var = tk.DoubleVar(value=0.0)
         self.b_var = tk.DoubleVar(value=2.0)
-        self.eps_var = tk.DoubleVar(value=1e-6)
+        self.eps_var = tk.DoubleVar(value=1e-4)
 
         self._add_entry(left, "alpha (φ(x)=alpha*x^2):", self.alpha_var)
         self._add_entry(left, "beta  (ψ(x)=beta*x^2):", self.beta_var)
@@ -160,7 +160,7 @@ class Lab05App:
             def psi(x: float) -> float:
                 return beta * x * x
 
-            value = double_integral_iterated(dataset, phi, psi, a, b, eps=eps)
+            value = double_integral_iterated(dataset, phi, psi, a, b, eps=eps, outer_eps=eps)
 
             self.task2_result.delete("1.0", tk.END)
             self.task2_result.insert(

@@ -138,29 +138,34 @@ def interpolate_2d(dataset: List[Tuple[Tuple[float, float], float]], target: Tup
     return _lagrange_interpolate(interp_y_sorted, ty)
 
 
-def adaptive_simpson(func: Callable[[float], float], a: float, b: float, eps: float = 1e-6, max_recursion: int = 20) -> float:
-    def simpson(f, a, b):
-        c = (a + b) / 2.0
-        return (b - a) * (f(a) + 4.0 * f(c) + f(b)) / 6.0
+def adaptive_simpson(func: Callable[[float], float], a: float, b: float, eps: float = 1e-6) -> float:
+    """Adaptive composite Simpson by doubling number of segments until
+    the difference between successive estimates is <= eps.
+    """
+    def composite_simpson(n: int) -> float:
+        h = (b - a) / n
+        s = func(a) + func(b)
+        # odd terms (4) and even terms (2)
+        odd_sum = 0.0
+        even_sum = 0.0
+        for i in range(1, n):
+            x = a + i * h
+            if i % 2 == 1:
+                odd_sum += func(x)
+            else:
+                even_sum += func(x)
+        return (h / 3.0) * (s + 4.0 * odd_sum + 2.0 * even_sum)
 
-    def recursive(f, a, b, eps, S, fa, fb, fc, depth):
-        c = (a + b) / 2.0
-        d = (a + c) / 2.0
-        e = (c + b) / 2.0
-        fd = f(d)
-        fe = f(e)
-        Sleft = (c - a) * (fa + 4.0 * fd + fc) / 6.0
-        Sright = (b - c) * (fc + 4.0 * fe + fb) / 6.0
-        if depth <= 0 or abs(Sleft + Sright - S) <= 15 * eps:
-            return Sleft + Sright + (Sleft + Sright - S) / 15.0
-        return recursive(f, a, c, eps / 2.0, Sleft, fa, fc, fd, depth - 1) + recursive(f, c, b, eps / 2.0, Sright, fc, fb, fe, depth - 1)
-
-    fa = func(a)
-    fb = func(b)
-    c = (a + b) / 2.0
-    fc = func(c)
-    S = (b - a) * (fa + 4.0 * fc + fb) / 6.0
-    return recursive(func, a, b, eps, S, fa, fb, fc, max_recursion)
+    n = 1
+    I_prev = composite_simpson(n)
+    # limit iterations to avoid infinite loop
+    for _ in range(0, 30):
+        n *= 2
+        I_curr = composite_simpson(n)
+        if abs(I_curr - I_prev) <= eps:
+            return I_curr
+        I_prev = I_curr
+    return I_curr
 
 
 def double_integral_iterated(
